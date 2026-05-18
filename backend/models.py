@@ -4,6 +4,9 @@ from enum import Enum
 from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
+from backend.config import TASK_STATUS_MAX_LENGTH, ENERGY_LEVEL_MAX_LENGTH, PRIORITY_MAX_LENGTH, TASK_TITLE_MAX_LENGTH, \
+    AGENT_LOG_TRIGGER_MAX_LENGTH, AGENT_LOG_MESSAGE_MAX_LENGTH
+
 
 class Priority(str, Enum):
     HIGH = "high"
@@ -31,14 +34,13 @@ class Base(DeclarativeBase):
 class Task(Base):
     __tablename__ = "tasks"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    title: Mapped[str] = mapped_column(String(200))
-    priority: Mapped[Priority] = mapped_column(String(10))
-    energy_required: Mapped[EnergyLevel] = mapped_column(String(10))
+    title: Mapped[str] = mapped_column(String(TASK_TITLE_MAX_LENGTH))
+    priority: Mapped[Priority] = mapped_column(String(PRIORITY_MAX_LENGTH))
+    energy_required: Mapped[EnergyLevel] = mapped_column(String(ENERGY_LEVEL_MAX_LENGTH))
     estimated_minutes: Mapped[int] = mapped_column()
     actual_minutes: Mapped[int | None] = mapped_column()
     deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    status: Mapped[TaskStatus] = mapped_column(String(20), default=TaskStatus.PENDING)
+    status: Mapped[TaskStatus] = mapped_column(String(TASK_STATUS_MAX_LENGTH), default=TaskStatus.PENDING)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
@@ -65,5 +67,5 @@ class AgentLog(Base):
     timestamp: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
-    trigger: Mapped[str] = mapped_column(String(50))
-    message: Mapped[str] = mapped_column(String(1000))
+    trigger: Mapped[str] = mapped_column(String(AGENT_LOG_TRIGGER_MAX_LENGTH))
+    message: Mapped[str] = mapped_column(String(AGENT_LOG_MESSAGE_MAX_LENGTH))
