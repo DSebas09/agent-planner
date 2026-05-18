@@ -26,6 +26,12 @@ class TaskStatus(str, Enum):
     COMPLETED = "completed"
     POSTPONED = "postponed"
 
+class AgentTrigger(str, Enum):
+    RE_PLAN = "re_plan"
+    TASK_ADDED = "task_added"
+    TASK_COMPLETED = "task_completed"
+    MANUAL = "manual"
+
 
 class Base(DeclarativeBase):
     pass
@@ -67,5 +73,5 @@ class AgentLog(Base):
     timestamp: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
-    trigger: Mapped[str] = mapped_column(String(AGENT_LOG_TRIGGER_MAX_LENGTH))
+    trigger: Mapped[AgentTrigger] = mapped_column(String(AGENT_LOG_TRIGGER_MAX_LENGTH))
     message: Mapped[str] = mapped_column(String(AGENT_LOG_MESSAGE_MAX_LENGTH))
