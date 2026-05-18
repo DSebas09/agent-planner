@@ -1,0 +1,13 @@
+[project]
+name = "agent-planner"
+version = "0.1.0"
+description = "Adaptive task planning agent with RT-BDI architecture and fuzzy logic"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "sqlalchemy>=2.0.0",
+    "scikit-fuzzy>=0.4.2",
+    "numpy>=1.26.0",
+    "pydantic>=2.7.0",
+]
