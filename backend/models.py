@@ -1,7 +1,7 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from enum import Enum
 
-from sqlalchemy import DateTime, ForeignKey, String
+from sqlalchemy import DateTime, ForeignKey, String, Date
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from backend.config import TASK_STATUS_MAX_LENGTH, ENERGY_LEVEL_MAX_LENGTH, PRIORITY_MAX_LENGTH, TASK_TITLE_MAX_LENGTH, \
@@ -59,6 +59,7 @@ class DayPlanEntry(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"))
+    plan_date: Mapped[date] = mapped_column(Date, index=True)
     position: Mapped[int] = mapped_column()
     scheduled_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     scheduled_end: Mapped[datetime] = mapped_column(DateTime(timezone=True))
