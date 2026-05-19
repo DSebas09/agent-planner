@@ -52,10 +52,9 @@ def _resolve_order(
         in_progress.energy_required,
     )
 
-    top_task, top_score = scored_pending[0] if scored_pending else (None, 0.0)
+    top_task, top_score = scored_pending[0]
     should_interrupt = (
         urgent_task is not None
-        and top_task is not None
         and top_task.id == urgent_task.id
         and top_score >= in_progress_score + INTERRUPTION_THRESHOLD
     )
