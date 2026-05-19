@@ -27,7 +27,7 @@ def _score_tasks(tasks: list[Task], now: datetime) -> list[tuple[Task, float]]:
     scored = []
     for task in tasks:
         minutes = _minutes_to_deadline(task, now)
-        score = compute_task_score(minutes, task.priority)
+        score = compute_task_score(minutes, task.priority, task.energy_required)
         scored.append((task, score))
     return sorted(scored, key=lambda x: x[1], reverse=True)
 
@@ -41,6 +41,7 @@ def _resolve_order(
     in_progress_score = compute_task_score(
         _minutes_to_deadline(in_progress, now),
         in_progress.priority,
+        in_progress.energy_required,
     )
 
     top_task, top_score = scored_pending[0] if scored_pending else (None, 0.0)
