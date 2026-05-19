@@ -5,6 +5,7 @@ from skfuzzy import control as ctrl
 from config import MINUTES_IN_DAY, PERCENTAGE_MAX
 
 PRIORITY_MAP = {"high": 75, "medium": 50, "low": 25}
+ENERGY_MAP: dict[str, float] = {"high": 75.0, "medium": 50.0, "low": 25.0}
 _UNIVERSE_STEP: int = 1
 
 # Urgency membership breakpoints (minutes to deadline)
@@ -18,13 +19,17 @@ _PRIORITY_HIGH: tuple[int, ...] = (50, 75, 100)
 _PRIORITY_MEDIUM: tuple[int, ...] = (25, 50, 75)
 _PRIORITY_LOW: tuple[int, ...] = (0, 25, 50)
 
+_ENERGY_HIGH: tuple[int, ...] = (50, 75, 100)
+_ENERGY_MEDIUM: tuple[int, ...] = (25, 50, 75)
+_ENERGY_LOW: tuple[int, ...] = (0, 25, 50)
+
 # Output score membership breakpoints
 _SCORE_VERY_HIGH: tuple[int, ...] = (75, 88, 100, 100)
 _SCORE_HIGH: tuple[int, ...] = (50, 75, 88)
 _SCORE_MEDIUM: tuple[int, ...] = (25, 50, 75)
 _SCORE_LOW: tuple[int, ...] = (0, 0, 25, 50)
 
-def _build_control_system() -> ctrl.ControlSystem:
+def _build_base_system() -> ctrl.ControlSystem:
     urgency  = ctrl.Antecedent(np.arange(0, MINUTES_IN_DAY + 1, _UNIVERSE_STEP), "urgency")
     priority = ctrl.Antecedent(np.arange(0, PERCENTAGE_MAX + 1, _UNIVERSE_STEP), "priority")
     score    = ctrl.Consequent(np.arange(0, PERCENTAGE_MAX + 1, _UNIVERSE_STEP), "score")
@@ -61,15 +66,60 @@ def _build_control_system() -> ctrl.ControlSystem:
     return ctrl.ControlSystem(rules)
 
 
-_system = _build_control_system()
+def _build_energy_system() -> ctrl.ControlSystem:
+    score_base  = ctrl.Antecedent(np.arange(0, PERCENTAGE_MAX + 1, _UNIVERSE_STEP), "score_base")
+    energy      = ctrl.Antecedent(np.arange(0, PERCENTAGE_MAX + 1, _UNIVERSE_STEP), "energy")
+    score_final = ctrl.Consequent(np.arange(0, PERCENTAGE_MAX + 1, _UNIVERSE_STEP), "score_final")
+
+    score_base["very_high"] = fuzz.trapmf(score_base.universe, _SCORE_VERY_HIGH)
+    score_base["high"]      = fuzz.trimf(score_base.universe,  _SCORE_HIGH)
+    score_base["medium"]    = fuzz.trimf(score_base.universe,  _SCORE_MEDIUM)
+    score_base["low"]       = fuzz.trapmf(score_base.universe, _SCORE_LOW)
+
+    energy["high"]   = fuzz.trimf(energy.universe, _ENERGY_HIGH)
+    energy["medium"] = fuzz.trimf(energy.universe, _ENERGY_MEDIUM)
+    energy["low"]    = fuzz.trimf(energy.universe, _ENERGY_LOW)
+
+    score_final["very_high"] = fuzz.trapmf(score_final.universe, _SCORE_VERY_HIGH)
+    score_final["high"]      = fuzz.trimf(score_final.universe,  _SCORE_HIGH)
+    score_final["medium"]    = fuzz.trimf(score_final.universe,  _SCORE_MEDIUM)
+    score_final["low"]       = fuzz.trapmf(score_final.universe, _SCORE_LOW)
+
+    rules = [
+        ctrl.Rule(score_base["very_high"] & energy["high"],   score_final["high"]),
+        ctrl.Rule(score_base["very_high"] & energy["medium"], score_final["very_high"]),
+        ctrl.Rule(score_base["very_high"] & energy["low"],    score_final["very_high"]),
+        ctrl.Rule(score_base["high"]      & energy["high"],   score_final["medium"]),
+        ctrl.Rule(score_base["high"]      & energy["medium"], score_final["high"]),
+        ctrl.Rule(score_base["high"]      & energy["low"],    score_final["high"]),
+        ctrl.Rule(score_base["medium"]    & energy["high"],   score_final["low"]),
+        ctrl.Rule(score_base["medium"]    & energy["medium"], score_final["medium"]),
+        ctrl.Rule(score_base["medium"]    & energy["low"],    score_final["medium"]),
+        ctrl.Rule(score_base["low"]       & energy["high"],   score_final["low"]),
+        ctrl.Rule(score_base["low"]       & energy["medium"], score_final["low"]),
+        ctrl.Rule(score_base["low"]       & energy["low"],    score_final["medium"]),
+    ]
+
+    return ctrl.ControlSystem(rules)
+
+
+_base_system   = _build_base_system()
+_energy_system = _build_energy_system()
 
 
 def compute_task_score(
     minutes_to_deadline: float,
     priority: str,
+    energy: str,
 ) -> float:
-    simulation = ctrl.ControlSystemSimulation(_system)
-    simulation.input["urgency"] = max(0.0, min(MINUTES_IN_DAY, minutes_to_deadline))
-    simulation.input["priority"] = float(PRIORITY_MAP[priority])
-    simulation.compute()
-    return round(float(simulation.output["score"]), 2)
+    base_sim = ctrl.ControlSystemSimulation(_base_system)
+    base_sim.input["urgency"] = max(0.0, min(float(MINUTES_IN_DAY), minutes_to_deadline))
+    base_sim.input["priority"] = PRIORITY_MAP[priority]
+    base_sim.compute()
+
+    energy_sim = ctrl.ControlSystemSimulation(_energy_system)
+    energy_sim.input["score_base"] = base_sim.output["score"]
+    energy_sim.input["energy"] = ENERGY_MAP[energy]
+    energy_sim.compute()
+
+    return round(float(energy_sim.output["score_final"]), 2)
