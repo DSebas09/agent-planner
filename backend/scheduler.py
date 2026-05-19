@@ -10,6 +10,11 @@ def build_plan(
     now: datetime,
     urgent_task: Task | None = None,
 ) -> list[DayPlanEntry]:
+    """Score and schedule all pending tasks into sequential time slots from now.
+
+    If a task is in progress, it stays at the top unless urgent_task scores
+    above it by at least INTERRUPTION_THRESHOLD points.
+    """
     pending = [t for t in tasks if t.status == TaskStatus.PENDING]
     in_progress = next((t for t in tasks if t.status == TaskStatus.IN_PROGRESS), None)
 
