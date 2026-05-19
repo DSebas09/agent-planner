@@ -9,12 +9,14 @@ from backend.config import TASK_STATUS_MAX_LENGTH, ENERGY_LEVEL_MAX_LENGTH, PRIO
 
 
 class Priority(str, Enum):
+    """Urgency of the task relative to external deadlines or commitments."""
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
 
 
 class EnergyLevel(str, Enum):
+    """Cognitive cost required to work on the task."""
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
@@ -26,7 +28,9 @@ class TaskStatus(str, Enum):
     COMPLETED = "completed"
     POSTPONED = "postponed"
 
+
 class AgentTrigger(str, Enum):
+    """Event that caused the agent to act."""
     RE_PLAN = "re_plan"
     TASK_ADDED = "task_added"
     TASK_COMPLETED = "task_completed"
