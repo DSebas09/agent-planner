@@ -1,3 +1,4 @@
+from collections.abc import Generator
 from contextlib import contextmanager
 
 from sqlalchemy import Engine, create_engine
@@ -22,7 +23,7 @@ def init_db() -> None:
 
 
 @contextmanager
-def get_session():
+def get_session() -> Generator[Session, None, None]:
     session = Session(get_engine())
     try:
         yield session
