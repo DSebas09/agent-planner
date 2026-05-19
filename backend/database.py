@@ -13,6 +13,9 @@ _engine: Engine | None = None
 def get_engine() -> Engine:
     global _engine
     if _engine is None:
+        # SQLite blocks cross-thread connection reuse by default. Disabling this is safe
+        # because SQLAlchemy's connection pool can return a connection created in one thread
+        # to another, that's expected behavior, not a concurrency hazard.
         _engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
     assert _engine is not None
     return _engine
