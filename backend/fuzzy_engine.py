@@ -29,6 +29,14 @@ _SCORE_HIGH: tuple[int, ...] = (50, 75, 88)
 _SCORE_MEDIUM: tuple[int, ...] = (25, 50, 75)
 _SCORE_LOW: tuple[int, ...] = (0, 0, 25, 50)
 
+
+def _apply_score_memberships(variable: ctrl.Antecedent | ctrl.Consequent) -> None:
+    variable["very_high"] = fuzz.trapmf(variable.universe, _SCORE_VERY_HIGH)
+    variable["high"]      = fuzz.trimf(variable.universe,  _SCORE_HIGH)
+    variable["medium"]    = fuzz.trimf(variable.universe,  _SCORE_MEDIUM)
+    variable["low"]       = fuzz.trapmf(variable.universe, _SCORE_LOW)
+
+
 def _build_base_system() -> ctrl.ControlSystem:
     urgency  = ctrl.Antecedent(np.arange(0, MINUTES_IN_DAY + 1, _UNIVERSE_STEP), "urgency")
     priority = ctrl.Antecedent(np.arange(0, PERCENTAGE_MAX + 1, _UNIVERSE_STEP), "priority")
@@ -43,10 +51,7 @@ def _build_base_system() -> ctrl.ControlSystem:
     priority["medium"] = fuzz.trimf(priority.universe, _PRIORITY_MEDIUM)
     priority["low"]    = fuzz.trimf(priority.universe, _PRIORITY_LOW)
 
-    score["very_high"] = fuzz.trapmf(score.universe, _SCORE_VERY_HIGH)
-    score["high"]      = fuzz.trimf(score.universe,  _SCORE_HIGH)
-    score["medium"]    = fuzz.trimf(score.universe,  _SCORE_MEDIUM)
-    score["low"]       = fuzz.trapmf(score.universe, _SCORE_LOW)
+    _apply_score_memberships(score)
 
     rules = [
         ctrl.Rule(urgency["very_high"] & priority["high"],   score["very_high"]),
@@ -71,19 +76,13 @@ def _build_energy_system() -> ctrl.ControlSystem:
     energy      = ctrl.Antecedent(np.arange(0, PERCENTAGE_MAX + 1, _UNIVERSE_STEP), "energy")
     score_final = ctrl.Consequent(np.arange(0, PERCENTAGE_MAX + 1, _UNIVERSE_STEP), "score_final")
 
-    score_base["very_high"] = fuzz.trapmf(score_base.universe, _SCORE_VERY_HIGH)
-    score_base["high"]      = fuzz.trimf(score_base.universe,  _SCORE_HIGH)
-    score_base["medium"]    = fuzz.trimf(score_base.universe,  _SCORE_MEDIUM)
-    score_base["low"]       = fuzz.trapmf(score_base.universe, _SCORE_LOW)
+    _apply_score_memberships(score_base)
 
     energy["high"]   = fuzz.trimf(energy.universe, _ENERGY_HIGH)
     energy["medium"] = fuzz.trimf(energy.universe, _ENERGY_MEDIUM)
     energy["low"]    = fuzz.trimf(energy.universe, _ENERGY_LOW)
 
-    score_final["very_high"] = fuzz.trapmf(score_final.universe, _SCORE_VERY_HIGH)
-    score_final["high"]      = fuzz.trimf(score_final.universe,  _SCORE_HIGH)
-    score_final["medium"]    = fuzz.trimf(score_final.universe,  _SCORE_MEDIUM)
-    score_final["low"]       = fuzz.trapmf(score_final.universe, _SCORE_LOW)
+    _apply_score_memberships(score_final)
 
     rules = [
         ctrl.Rule(score_base["very_high"] & energy["high"],   score_final["high"]),
