@@ -19,6 +19,7 @@ _PRIORITY_HIGH: tuple[int, ...] = (50, 75, 100)
 _PRIORITY_MEDIUM: tuple[int, ...] = (25, 50, 75)
 _PRIORITY_LOW: tuple[int, ...] = (0, 25, 50)
 
+# Energy membership breakpoints (mapped score 0–100)
 _ENERGY_HIGH: tuple[int, ...] = (50, 75, 100)
 _ENERGY_MEDIUM: tuple[int, ...] = (25, 50, 75)
 _ENERGY_LOW: tuple[int, ...] = (0, 25, 50)
@@ -84,6 +85,8 @@ def _build_energy_system() -> ctrl.ControlSystem:
 
     _apply_score_memberships(score_final)
 
+    # energy = effort required from the user: high-effort tasks are penalized one level
+    # to avoid exhausting the user first, even when urgency+priority are critical.
     rules = [
         ctrl.Rule(score_base["very_high"] & energy["high"],   score_final["high"]),
         ctrl.Rule(score_base["very_high"] & energy["medium"], score_final["very_high"]),
