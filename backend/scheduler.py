@@ -4,7 +4,7 @@ from config import INTERRUPTION_THRESHOLD, MINUTES_IN_DAY
 from fuzzy_engine import compute_task_score
 from models import DayPlanEntry, Task, TaskStatus, EnergyLevel
 
-_ENERGY_LEVEL_ORDER = list(reversed(EnergyLevel))  # [LOW, MEDIUM, HIGH]
+_ENERGY_LEVEL_ORDER = [EnergyLevel.LOW, EnergyLevel.MEDIUM, EnergyLevel.HIGH]
 
 
 def build_plan(
