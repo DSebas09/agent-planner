@@ -44,6 +44,7 @@ class Base(DeclarativeBase):
 class Task(Base):
     __tablename__ = "tasks"
 
+    id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(TASK_TITLE_MAX_LENGTH))
     priority: Mapped[Priority] = mapped_column(String(PRIORITY_MAX_LENGTH))
     energy_required: Mapped[EnergyLevel] = mapped_column(String(ENERGY_LEVEL_MAX_LENGTH))
