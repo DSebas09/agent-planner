@@ -111,6 +111,12 @@ def compute_task_score(
     priority: str,
     energy: str,
 ) -> float:
+    """Compute a task's scheduling score using a two-layer fuzzy reasoning system.
+
+    Layer 1 evaluates urgency and priority to produce a base score.
+    Layer 2 adjusts that score based on the energy the task requires.
+    Returns a value in [0.0, 100.0] — higher scores are scheduled first.
+    """
     if priority not in PRIORITY_MAP:
         raise ValueError(f"Invalid priority '{priority}'. Valid values: {list(PRIORITY_MAP)}")
     if energy not in ENERGY_MAP:
