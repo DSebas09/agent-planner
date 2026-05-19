@@ -4,27 +4,41 @@ from skfuzzy import control as ctrl
 
 PRIORITY_MAP = {"high": 75, "medium": 50, "low": 25}
 
+# Urgency membership breakpoints (minutes to deadline)
+_URGENCY_VERY_HIGH: tuple[int, ...] = (0, 0, 20, 30)
+_URGENCY_HIGH: tuple[int, ...] = (20, 60, 120)
+_URGENCY_MEDIUM: tuple[int, ...] = (60, 180, 300)
+_URGENCY_LOW: tuple[int, ...] = (240, 300, 1440, 1440)
+
+# Priority membership breakpoints (mapped score 0–100)
+_PRIORITY_HIGH: tuple[int, ...] = (50, 75, 100)
+_PRIORITY_MEDIUM: tuple[int, ...] = (25, 50, 75)
+_PRIORITY_LOW: tuple[int, ...] = (0, 25, 50)
+
+# Output score membership breakpoints
+_SCORE_VERY_HIGH: tuple[int, ...] = (75, 88, 100, 100)
+_SCORE_HIGH: tuple[int, ...] = (50, 75, 88)
+_SCORE_MEDIUM: tuple[int, ...] = (25, 50, 75)
+_SCORE_LOW: tuple[int, ...] = (0, 0, 25, 50)
+
 # Universes
 _urgency = ctrl.Antecedent(np.arange(0, 1441, 1), "urgency")
 _priority = ctrl.Antecedent(np.arange(0, 101, 1), "priority")
 _score = ctrl.Consequent(np.arange(0, 101, 1), "score")
 
-# urgency
-_urgency["very_high"] = fuzz.trapmf(_urgency.universe, [0, 0, 20, 30])
-_urgency["high"] = fuzz.trimf(_urgency.universe, [20, 60, 120])
-_urgency["medium"] = fuzz.trimf(_urgency.universe, [60, 180, 300])
-_urgency["low"] = fuzz.trapmf(_urgency.universe, [240, 300, 1440, 1440])
+_urgency["very_high"] = fuzz.trapmf(_urgency.universe, _URGENCY_VERY_HIGH)
+_urgency["high"]      = fuzz.trimf(_urgency.universe,  _URGENCY_HIGH)
+_urgency["medium"]    = fuzz.trimf(_urgency.universe,  _URGENCY_MEDIUM)
+_urgency["low"]       = fuzz.trapmf(_urgency.universe, _URGENCY_LOW)
 
-# priority and energy
-_priority["high"] = fuzz.trimf(_priority.universe, [50, 75, 100])
-_priority["medium"] = fuzz.trimf(_priority.universe, [25, 50, 75])
-_priority["low"] = fuzz.trimf(_priority.universe, [0, 25, 50])
+_priority["high"]   = fuzz.trimf(_priority.universe, _PRIORITY_HIGH)
+_priority["medium"] = fuzz.trimf(_priority.universe, _PRIORITY_MEDIUM)
+_priority["low"]    = fuzz.trimf(_priority.universe, _PRIORITY_LOW)
 
-# output score
-_score["very_high"] = fuzz.trapmf(_score.universe, [75, 88, 100, 100])
-_score["high"] = fuzz.trimf(_score.universe, [50, 75, 88])
-_score["medium"] = fuzz.trimf(_score.universe, [25, 50, 75])
-_score["low"] = fuzz.trapmf(_score.universe, [0, 0, 25, 50])
+_score["very_high"] = fuzz.trapmf(_score.universe, _SCORE_VERY_HIGH)
+_score["high"]      = fuzz.trimf(_score.universe, _SCORE_HIGH)
+_score["medium"]    = fuzz.trimf(_score.universe, _SCORE_MEDIUM)
+_score["low"]       = fuzz.trapmf(_score.universe, _SCORE_LOW)
 
 # Fuzzy rules
 _rules = [
