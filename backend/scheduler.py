@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from config import INTERRUPTION_THRESHOLD
+from config import INTERRUPTION_THRESHOLD, MINUTES_IN_DAY
 from fuzzy_engine import compute_task_score
 from models import DayPlanEntry, Task, TaskStatus
 
@@ -85,5 +85,5 @@ def _assign_time_slots(tasks: list[Task], now: datetime) -> list[DayPlanEntry]:
 
 def _minutes_to_deadline(task: Task, now: datetime) -> float:
     if task.deadline is None:
-        return 1440.0
+        return float(MINUTES_IN_DAY)
     return max(0.0, (task.deadline - now).total_seconds() / 60)
