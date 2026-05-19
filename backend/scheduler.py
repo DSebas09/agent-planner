@@ -87,6 +87,7 @@ def _assign_time_slots(tasks: list[Task], now: datetime) -> list[DayPlanEntry]:
             DayPlanEntry(
                 task_id=task.id,
                 position=position,
+                plan_date=now.date(),
                 scheduled_start=start,
                 scheduled_end=end,
             )
