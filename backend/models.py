@@ -4,7 +4,7 @@ from enum import Enum
 from sqlalchemy import DateTime, ForeignKey, String, Date
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-from backend.config import TASK_STATUS_MAX_LENGTH, ENERGY_LEVEL_MAX_LENGTH, PRIORITY_MAX_LENGTH, TASK_TITLE_MAX_LENGTH, \
+from config import TASK_STATUS_MAX_LENGTH, ENERGY_LEVEL_MAX_LENGTH, PRIORITY_MAX_LENGTH, TASK_TITLE_MAX_LENGTH, \
     AGENT_LOG_TRIGGER_MAX_LENGTH, AGENT_LOG_MESSAGE_MAX_LENGTH
 
 
