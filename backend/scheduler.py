@@ -18,7 +18,10 @@ def build_plan(
     above it by at least INTERRUPTION_THRESHOLD points.
     """
     pending = [t for t in tasks if t.status == TaskStatus.PENDING]
-    in_progress = next((t for t in tasks if t.status == TaskStatus.IN_PROGRESS), None)
+    in_progress_tasks = [t for t in tasks if t.status == TaskStatus.IN_PROGRESS]
+    if len(in_progress_tasks) > 1:
+        raise ValueError(f"Expected at most one IN_PROGRESS task, found {len(in_progress_tasks)}")
+    in_progress = in_progress_tasks[0] if in_progress_tasks else None
 
     scored = _score_tasks(pending, now)
 
