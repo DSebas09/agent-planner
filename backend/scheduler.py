@@ -38,6 +38,9 @@ def _resolve_order(
     now: datetime,
     urgent_task: Task | None,
 ) -> list[Task]:
+    if not scored_pending:
+        return [in_progress]
+
     in_progress_score = compute_task_score(
         _minutes_to_deadline(in_progress, now),
         in_progress.priority,
