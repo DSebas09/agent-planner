@@ -111,6 +111,11 @@ def compute_task_score(
     priority: str,
     energy: str,
 ) -> float:
+    if priority not in PRIORITY_MAP:
+        raise ValueError(f"Invalid priority '{priority}'. Valid values: {list(PRIORITY_MAP)}")
+    if energy not in ENERGY_MAP:
+        raise ValueError(f"Invalid energy '{energy}'. Valid values: {list(ENERGY_MAP)}")
+
     base_sim = ctrl.ControlSystemSimulation(_base_system)
     base_sim.input["urgency"] = max(0.0, min(float(MINUTES_IN_DAY), minutes_to_deadline))
     base_sim.input["priority"] = PRIORITY_MAP[priority]
