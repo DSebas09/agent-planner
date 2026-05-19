@@ -7,6 +7,9 @@ load_dotenv()
 
 _BASE_DIR = Path(__file__).resolve().parent
 
+MINUTES_IN_DAY: int = 1440
+PERCENTAGE_MAX: int = 100
+
 # models.py
 TASK_TITLE_MAX_LENGTH: int = 200
 PRIORITY_MAX_LENGTH: int = 10

@@ -2,7 +2,10 @@ import numpy as np
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
 
+from config import MINUTES_IN_DAY, PERCENTAGE_MAX
+
 PRIORITY_MAP = {"high": 75, "medium": 50, "low": 25}
+_UNIVERSE_STEP: int = 1
 
 # Urgency membership breakpoints (minutes to deadline)
 _URGENCY_VERY_HIGH: tuple[int, ...] = (0, 0, 20, 30)
@@ -22,9 +25,9 @@ _SCORE_MEDIUM: tuple[int, ...] = (25, 50, 75)
 _SCORE_LOW: tuple[int, ...] = (0, 0, 25, 50)
 
 # Universes
-_urgency = ctrl.Antecedent(np.arange(0, 1441, 1), "urgency")
-_priority = ctrl.Antecedent(np.arange(0, 101, 1), "priority")
-_score = ctrl.Consequent(np.arange(0, 101, 1), "score")
+_urgency  = ctrl.Antecedent(np.arange(0, MINUTES_IN_DAY + 1, _UNIVERSE_STEP), "urgency")
+_priority = ctrl.Antecedent(np.arange(0, PERCENTAGE_MAX + 1, _UNIVERSE_STEP), "priority")
+_score    = ctrl.Consequent(np.arange(0, PERCENTAGE_MAX + 1, _UNIVERSE_STEP), "score")
 
 _urgency["very_high"] = fuzz.trapmf(_urgency.universe, _URGENCY_VERY_HIGH)
 _urgency["high"]      = fuzz.trimf(_urgency.universe,  _URGENCY_HIGH)
@@ -64,7 +67,7 @@ def compute_task_score(
     priority: str,
 ) -> float:
     simulation = ctrl.ControlSystemSimulation(_system)
-    simulation.input["urgency"] = max(0.0, min(1440.0, minutes_to_deadline))
+    simulation.input["urgency"] = max(0.0, min(MINUTES_IN_DAY, minutes_to_deadline))
     simulation.input["priority"] = float(PRIORITY_MAP[priority])
     simulation.compute()
     return round(float(simulation.output["score"]), 2)
