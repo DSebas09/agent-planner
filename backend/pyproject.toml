@@ -13,4 +13,5 @@ dependencies = [
     "scipy>=1.17.1",
     "packaging>=26.2",
     "networkx>=3.6.1",
+    "python-dotenv>=1.2.2",
 ]
