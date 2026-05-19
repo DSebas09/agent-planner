@@ -2,7 +2,9 @@ from datetime import datetime, timedelta
 
 from config import INTERRUPTION_THRESHOLD, MINUTES_IN_DAY
 from fuzzy_engine import compute_task_score
-from models import DayPlanEntry, Task, TaskStatus
+from models import DayPlanEntry, Task, TaskStatus, EnergyLevel
+
+_ENERGY_LEVEL_ORDER = list(reversed(EnergyLevel))  # [LOW, MEDIUM, HIGH]
 
 
 def build_plan(
@@ -34,7 +36,14 @@ def _score_tasks(tasks: list[Task], now: datetime) -> list[tuple[Task, float]]:
         minutes = _minutes_to_deadline(task, now)
         score = compute_task_score(minutes, task.priority, task.energy_required)
         scored.append((task, score))
-    return sorted(scored, key=lambda x: x[1], reverse=True)
+    return sorted(
+        scored,
+        key=lambda x: (
+            -x[1],
+            x[0].deadline or datetime.max,
+            _ENERGY_LEVEL_ORDER.index(x[0].energy_required),
+        ),
+    )
 
 
 def _resolve_order(
