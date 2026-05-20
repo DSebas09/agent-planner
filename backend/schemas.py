@@ -1,6 +1,10 @@
-from pydantic import BaseModel, Field, AwareDatetime
+from pydantic import BaseModel, Field, AwareDatetime, ConfigDict
 
 from models import Priority, EnergyLevel, TaskStatus
+
+
+class OrmBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TaskCreate(BaseModel):
@@ -11,7 +15,7 @@ class TaskCreate(BaseModel):
     deadline: AwareDatetime | None = None
 
 
-class TaskResponse(BaseModel):
+class TaskResponse(OrmBase):
     id: int
     title: str
     priority: Priority
@@ -22,16 +26,12 @@ class TaskResponse(BaseModel):
     status: TaskStatus
     created_at: AwareDatetime
 
-    model_config = {"from_attributes": True}
 
-
-class PlanEntryResponse(BaseModel):
+class PlanEntryResponse(OrmBase):
     position: int
     scheduled_start: AwareDatetime
     scheduled_end: AwareDatetime
     task: TaskResponse
-
-    model_config = {"from_attributes": True}
 
 
 class CompleteTaskRequest(BaseModel):
@@ -42,10 +42,8 @@ class DelayRequest(BaseModel):
     extra_minutes: int = Field(gt=0)
 
 
-class AgentLogResponse(BaseModel):
+class AgentLogResponse(OrmBase):
     id: int
     timestamp: AwareDatetime
     trigger: str
     message: str
-
-    model_config = {"from_attributes": True}
