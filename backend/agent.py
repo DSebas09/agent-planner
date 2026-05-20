@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from models import AgentLog, DayPlanEntry, Task, TaskStatus
@@ -51,7 +51,7 @@ class Agent:
 
     def on_delay_reported(self, task: Task, extra_minutes: int) -> list[DayPlanEntry]:
         tasks = self._perceive()
-        now_shifted = datetime.now() + __import__("datetime").timedelta(minutes=extra_minutes)
+        now_shifted = datetime.now() + timedelta(minutes=extra_minutes)
         plan = build_plan(tasks, now_shifted)
         self._apply_plan(plan)
         self._log(
@@ -74,9 +74,7 @@ class Agent:
     # Execution
 
     def _apply_plan(self, plan: list[DayPlanEntry]) -> None:
-        self._session.execute(
-            __import__("sqlalchemy").delete(DayPlanEntry)
-        )
+        self._session.execute(delete(DayPlanEntry))
         self._session.add_all(plan)
         self._session.flush()
 
