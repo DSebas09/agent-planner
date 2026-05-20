@@ -20,11 +20,13 @@ class Agent:
             trigger=AgentTrigger.TASK_ADDED,
             message=self._message_task_added(new_task, plan),
         )
+        self._session.flush()
         return plan
 
     def on_task_started(self, task: Task) -> list[DayPlanEntry]:
         self._reset_current_in_progress(exclude_id=task.id)
         task.status = TaskStatus.IN_PROGRESS
+        # flush here stays. it's needed before _perceive() reads updated state
         self._session.flush()
 
         now = datetime.now(timezone.utc)
@@ -35,6 +37,7 @@ class Agent:
             trigger=AgentTrigger.TASK_STARTED,
             message=f"Iniciaste '{task.title}'. Ajusté el plan a partir de ahora.",
         )
+        self._session.flush()
         return plan
 
     def on_task_completed(self, task: Task, actual_minutes: int) -> list[DayPlanEntry]:
@@ -50,6 +53,7 @@ class Agent:
             trigger=AgentTrigger.TASK_COMPLETED,
             message=self._message_task_completed(task, actual_minutes, plan),
         )
+        self._session.flush()
         return plan
 
     def on_delay_reported(self, task: Task, extra_minutes: int) -> list[DayPlanEntry]:
@@ -64,6 +68,7 @@ class Agent:
             trigger=AgentTrigger.DELAY_REPORTED,
             message=self._message_delay_reported(task, extra_minutes, plan),
         )
+        self._session.flush()
         return plan
 
     # Cognition
@@ -97,7 +102,6 @@ class Agent:
 
     def _log(self, trigger: AgentTrigger, message: str) -> None:
         self._session.add(AgentLog(trigger=trigger, message=message))
-        self._session.flush()
 
     # Natural language templates
 
