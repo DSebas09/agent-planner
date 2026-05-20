@@ -1,12 +1,12 @@
 from contextlib import asynccontextmanager
-from typing import Generator, Annotated
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
 from agent import Agent
-from database import get_session, init_db
+from dependencies import DBSession, TaskDep
+from database import init_db
 from models import AgentLog, DayPlanEntry, Task, TaskStatus
 from schemas import (
     AgentLogResponse,
@@ -23,12 +23,6 @@ async def lifespan(_app: FastAPI):
     yield
 
 app = FastAPI(title="Agent Planner", lifespan=lifespan)
-
-def _get_db() -> Generator[Session, None, None]:
-    with get_session() as session:
-        yield session
-
-DBSession = Annotated[Session, Depends(_get_db)]
 
 
 @app.post("/tasks", response_model=TaskResponse, status_code=201)
@@ -54,32 +48,23 @@ def list_tasks(session: DBSession) -> list[Task]:
 
 @app.get("/plan", response_model=list[PlanEntryResponse])
 def get_plan(session: DBSession) -> list[DayPlanEntry]:
-    return list(
-        session.execute(
-            select(DayPlanEntry)
-            .options(joinedload(DayPlanEntry.task))
-            .order_by(DayPlanEntry.position)
-        ).scalars()
-    )
+    return _fetch_current_plan(session)
 
 
 @app.post("/tasks/{task_id}/start", response_model=list[PlanEntryResponse])
-def start_task(task_id: int, session: DBSession) -> list[DayPlanEntry]:
-    task = _get_task_or_404(session, task_id)
+def start_task(task_id: int, task: TaskDep, session: DBSession) -> list[DayPlanEntry]:
     Agent(session).on_task_started(task)
     return _fetch_current_plan(session)
 
 
 @app.post("/tasks/{task_id}/complete", response_model=list[PlanEntryResponse])
-def complete_task(task_id: int, payload: CompleteTaskRequest, session: DBSession) -> list[DayPlanEntry]:
-    task = _get_task_or_404(session, task_id)
+def complete_task(task_id: int, task: TaskDep, payload: CompleteTaskRequest, session: DBSession) -> list[DayPlanEntry]:
     Agent(session).on_task_completed(task, payload.actual_minutes)
     return _fetch_current_plan(session)
 
 
 @app.post("/tasks/{task_id}/delay", response_model=list[PlanEntryResponse])
-def report_delay(task_id: int, payload: DelayRequest, session: DBSession) -> list[DayPlanEntry]:
-    task = _get_task_or_404(session, task_id)
+def report_delay(task_id: int, task: TaskDep, payload: DelayRequest, session: DBSession) -> list[DayPlanEntry]:
     Agent(session).on_delay_reported(task, payload.extra_minutes)
     return _fetch_current_plan(session)
 
@@ -91,13 +76,6 @@ def get_logs(session: DBSession) -> list[AgentLog]:
             select(AgentLog).order_by(AgentLog.timestamp.desc())
         ).scalars()
     )
-
-
-def _get_task_or_404(session: Session, task_id: int) -> Task:
-    task = session.get(Task, task_id)
-    if task is None:
-        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
-    return task
 
 
 def _fetch_current_plan(session: Session) -> list[DayPlanEntry]:
