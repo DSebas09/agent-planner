@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
@@ -14,13 +16,12 @@ from schemas import (
     TaskResponse,
 )
 
-app = FastAPI(title="Agent Planner")
-
-
-@app.on_event("startup")
-def startup() -> None:
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
     init_db()
+    yield
 
+app = FastAPI(title="Agent Planner", lifespan=lifespan)
 
 @app.post("/tasks", response_model=TaskResponse, status_code=201)
 def create_task(payload: TaskCreate) -> Task:
