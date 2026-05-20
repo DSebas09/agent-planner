@@ -119,9 +119,7 @@ class Agent:
             f"La inserté en posición {position} según su prioridad y deadline."
         )
 
-    def _message_task_completed(
-        self, task: Task, actual_minutes: int, plan: list[DayPlanEntry]
-    ) -> str:
+    def _message_task_completed(self, task: Task, actual_minutes: int, plan: list[DayPlanEntry]) -> str:
         delta = actual_minutes - task.estimated_minutes
         next_entry = plan[0] if plan else None
         next_task = (
@@ -136,13 +134,16 @@ class Agent:
             return base + f"Reorganicé el plan — siguiente tarea: '{next_task.title}'."
         return base + "No quedan tareas pendientes por hoy."
 
-    def _message_delay_reported(
-        self, task: Task, extra_minutes: int, plan: list[DayPlanEntry]
-    ) -> str:
-        return (
+    def _message_delay_reported(self, task: Task, extra_minutes: int, plan: list[DayPlanEntry]) -> str:
+        next_entry = plan[0] if plan else None
+        next_task = self._session.get(Task, next_entry.task_id) if next_entry else None
+        base = (
             f"Reportaste {extra_minutes} min extra en '{task.title}'. "
             f"Reorganicé el plan desplazando todos los slots siguientes."
         )
+        if next_task:
+            return base + f" Siguiente tarea: '{next_task.title}'."
+        return base
 
     def _minutes_to_deadline_str(self, task: Task) -> str:
         if task.deadline is None:
