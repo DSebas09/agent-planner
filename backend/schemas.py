@@ -1,5 +1,4 @@
-from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, AwareDatetime
 
 from models import Priority, EnergyLevel, TaskStatus
 
@@ -9,7 +8,7 @@ class TaskCreate(BaseModel):
     priority: Priority
     energy_required: EnergyLevel
     estimated_minutes: int = Field(gt=0)
-    deadline: datetime | None = None
+    deadline: AwareDatetime | None = None
 
 
 class TaskResponse(BaseModel):
@@ -19,17 +18,17 @@ class TaskResponse(BaseModel):
     energy_required: EnergyLevel
     estimated_minutes: int
     actual_minutes: int | None
-    deadline: datetime | None
+    deadline: AwareDatetime | None
     status: TaskStatus
-    created_at: datetime
+    created_at: AwareDatetime
 
     model_config = {"from_attributes": True}
 
 
 class PlanEntryResponse(BaseModel):
     position: int
-    scheduled_start: datetime
-    scheduled_end: datetime
+    scheduled_start: AwareDatetime
+    scheduled_end: AwareDatetime
     task: TaskResponse
 
     model_config = {"from_attributes": True}
@@ -45,7 +44,7 @@ class DelayRequest(BaseModel):
 
 class AgentLogResponse(BaseModel):
     id: int
-    timestamp: datetime
+    timestamp: AwareDatetime
     trigger: str
     message: str
 
