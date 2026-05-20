@@ -31,10 +31,10 @@ class TaskStatus(str, Enum):
 
 class AgentTrigger(str, Enum):
     """Event that caused the agent to act."""
-    RE_PLAN = "re_plan"
     TASK_ADDED = "task_added"
+    TASK_STARTED = "task_started"
     TASK_COMPLETED = "task_completed"
-    MANUAL = "manual"
+    DELAY_REPORTED = "delay_reported"
 
 
 class Base(DeclarativeBase):
