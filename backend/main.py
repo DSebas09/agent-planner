@@ -65,11 +65,7 @@ def start_task(task_id: int) -> list[DayPlanEntry]:
         task = _get_task_or_404(session, task_id)
         Agent(session).on_task_started(task)
         session.commit()
-        return session.execute(
-            select(DayPlanEntry)
-            .options(joinedload(DayPlanEntry.task))
-            .order_by(DayPlanEntry.position)
-        ).scalars().all()
+        return _fetch_current_plan(session)
 
 
 @app.post("/tasks/{task_id}/complete", response_model=list[PlanEntryResponse])
@@ -78,11 +74,7 @@ def complete_task(task_id: int, payload: CompleteTaskRequest) -> list[DayPlanEnt
         task = _get_task_or_404(session, task_id)
         Agent(session).on_task_completed(task, payload.actual_minutes)
         session.commit()
-        return session.execute(
-            select(DayPlanEntry)
-            .options(joinedload(DayPlanEntry.task))
-            .order_by(DayPlanEntry.position)
-        ).scalars().all()
+        return _fetch_current_plan(session)
 
 
 @app.post("/tasks/{task_id}/delay", response_model=list[PlanEntryResponse])
@@ -91,11 +83,7 @@ def report_delay(task_id: int, payload: DelayRequest) -> list[DayPlanEntry]:
         task = _get_task_or_404(session, task_id)
         Agent(session).on_delay_reported(task, payload.extra_minutes)
         session.commit()
-        return session.execute(
-            select(DayPlanEntry)
-            .options(joinedload(DayPlanEntry.task))
-            .order_by(DayPlanEntry.position)
-        ).scalars().all()
+        return _fetch_current_plan(session)
 
 
 @app.get("/logs", response_model=list[AgentLogResponse])
@@ -113,3 +101,12 @@ def _get_task_or_404(session: Session, task_id: int) -> Task:
     if task is None:
         raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
     return task
+
+
+def _fetch_current_plan(session: Session) -> list[DayPlanEntry]:
+    result = session.execute(
+        select(DayPlanEntry)
+        .options(joinedload(DayPlanEntry.task))
+        .order_by(DayPlanEntry.position)
+    )
+    return list(result.scalars())
