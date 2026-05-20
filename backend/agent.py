@@ -51,7 +51,7 @@ class Agent:
         self._apply_plan(plan)
         self._log(
             trigger=AgentTrigger.TASK_COMPLETED,
-            message=self._message_task_completed(task, actual_minutes, plan),
+            message=self._message_task_completed(task, actual_minutes, self._resolve_next_task(plan)),
         )
         self._session.flush()
         return plan
@@ -66,7 +66,7 @@ class Agent:
         self._apply_plan(plan)
         self._log(
             trigger=AgentTrigger.DELAY_REPORTED,
-            message=self._message_delay_reported(task, extra_minutes, plan),
+            message=self._message_delay_reported(task, extra_minutes, self._resolve_next_task(plan)),
         )
         self._session.flush()
         return plan
@@ -103,28 +103,28 @@ class Agent:
     def _log(self, trigger: AgentTrigger, message: str) -> None:
         self._session.add(AgentLog(trigger=trigger, message=message))
 
+    def _resolve_next_task(self, plan: list[DayPlanEntry]) -> Task | None:
+        next_entry = plan[0] if plan else None
+        return self._session.get(Task, next_entry.task_id) if next_entry else None  # type: ignore
+
     # Natural language templates
 
     def _message_task_added(self, task: Task, plan: list[DayPlanEntry]) -> str:
         entry = next((e for e in plan if e.task_id == task.id), None)
-        position = entry.position + 1 if entry else "?"
+        position: int | None = entry.position + 1 if entry else None
         minutes = self._minutes_to_deadline_str(task)
-        if entry and entry.position == 0:
+        if position == 1:
             return (
                 f"Agregaste '{task.title}' con deadline en {minutes}. "
                 f"La inserté en posición 1 porque su urgencia supera la tarea actual."
             )
         return (
             f"Agregaste '{task.title}' con deadline en {minutes}. "
-            f"La inserté en posición {position} según su prioridad y deadline."
+            f"La inserté en posición {position or '?'} según su prioridad y deadline."
         )
 
-    def _message_task_completed(self, task: Task, actual_minutes: int, plan: list[DayPlanEntry]) -> str:
+    def _message_task_completed(self, task: Task, actual_minutes: int, next_task: Task | None) -> str:
         delta = actual_minutes - task.estimated_minutes
-        next_entry = plan[0] if plan else None
-        next_task = (
-            self._session.get(Task, next_entry.task_id) if next_entry else None
-        )
         deviation = f"+{delta} min" if delta > 0 else f"{delta} min"
         base = (
             f"Completaste '{task.title}' en {actual_minutes} min "
@@ -134,9 +134,7 @@ class Agent:
             return base + f"Reorganicé el plan — siguiente tarea: '{next_task.title}'."
         return base + "No quedan tareas pendientes por hoy."
 
-    def _message_delay_reported(self, task: Task, extra_minutes: int, plan: list[DayPlanEntry]) -> str:
-        next_entry = plan[0] if plan else None
-        next_task = self._session.get(Task, next_entry.task_id) if next_entry else None
+    def _message_delay_reported(self, task: Task, extra_minutes: int, next_task: Task | None) -> str:
         base = (
             f"Reportaste {extra_minutes} min extra en '{task.title}'. "
             f"Reorganicé el plan desplazando todos los slots siguientes."
