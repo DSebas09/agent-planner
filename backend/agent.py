@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from models import AgentLog, DayPlanEntry, Task, TaskStatus
+from models import AgentLog, AgentTrigger, DayPlanEntry, Task, TaskStatus
 from scheduler import build_plan
 
 
@@ -16,7 +16,7 @@ class Agent:
         plan = build_plan(tasks, datetime.now(), urgent_task=new_task)
         self._apply_plan(plan)
         self._log(
-            trigger="task_added",
+            trigger=AgentTrigger.TASK_ADDED,
             message=self._message_task_added(new_task, plan),
         )
         return plan
@@ -30,7 +30,7 @@ class Agent:
         plan = build_plan(tasks, datetime.now())
         self._apply_plan(plan)
         self._log(
-            trigger="task_started",
+            trigger=AgentTrigger.TASK_STARTED,
             message=f"Iniciaste '{task.title}'. Ajusté el plan a partir de ahora.",
         )
         return plan
@@ -44,7 +44,7 @@ class Agent:
         plan = build_plan(tasks, datetime.now())
         self._apply_plan(plan)
         self._log(
-            trigger="task_completed",
+            trigger=AgentTrigger.TASK_COMPLETED,
             message=self._message_task_completed(task, actual_minutes, plan),
         )
         return plan
@@ -55,7 +55,7 @@ class Agent:
         plan = build_plan(tasks, now_shifted)
         self._apply_plan(plan)
         self._log(
-            trigger="delay_reported",
+            trigger=AgentTrigger.DELAY_REPORTED,
             message=self._message_delay_reported(task, extra_minutes, plan),
         )
         return plan
@@ -89,7 +89,7 @@ class Agent:
         if current is not None:
             current.status = TaskStatus.PENDING
 
-    def _log(self, trigger: str, message: str) -> None:
+    def _log(self, trigger: AgentTrigger, message: str) -> None:
         self._session.add(AgentLog(trigger=trigger, message=message))
         self._session.flush()
 
