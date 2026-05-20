@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
@@ -12,8 +12,9 @@ class Agent:
         self._session = session
 
     def on_task_added(self, new_task: Task) -> list[DayPlanEntry]:
+        now = datetime.now(timezone.utc)
         tasks = self._perceive()
-        plan = build_plan(tasks, datetime.now(), urgent_task=new_task)
+        plan = build_plan(tasks, now, urgent_task=new_task)
         self._apply_plan(plan)
         self._log(
             trigger=AgentTrigger.TASK_ADDED,
@@ -26,8 +27,9 @@ class Agent:
         task.status = TaskStatus.IN_PROGRESS
         self._session.flush()
 
+        now = datetime.now(timezone.utc)
         tasks = self._perceive()
-        plan = build_plan(tasks, datetime.now())
+        plan = build_plan(tasks, now)
         self._apply_plan(plan)
         self._log(
             trigger=AgentTrigger.TASK_STARTED,
@@ -40,8 +42,9 @@ class Agent:
         task.actual_minutes = actual_minutes
         self._session.flush()
 
+        now = datetime.now(timezone.utc)
         tasks = self._perceive()
-        plan = build_plan(tasks, datetime.now())
+        plan = build_plan(tasks, now)
         self._apply_plan(plan)
         self._log(
             trigger=AgentTrigger.TASK_COMPLETED,
@@ -50,8 +53,9 @@ class Agent:
         return plan
 
     def on_delay_reported(self, task: Task, extra_minutes: int) -> list[DayPlanEntry]:
+        now = datetime.now(timezone.utc)
         tasks = self._perceive()
-        now_shifted = datetime.now() + timedelta(minutes=extra_minutes)
+        now_shifted = now + timedelta(minutes=extra_minutes)
         plan = build_plan(tasks, now_shifted)
         self._apply_plan(plan)
         self._log(
@@ -137,7 +141,7 @@ class Agent:
     def _minutes_to_deadline_str(self, task: Task) -> str:
         if task.deadline is None:
             return "sin deadline"
-        minutes = max(0, int((task.deadline - datetime.now()).total_seconds() / 60))
+        minutes = max(0, int((task.deadline - datetime.now(timezone.utc)).total_seconds() / 60))
         if minutes < 60:
             return f"{minutes} min"
         return f"{minutes // 60}h {minutes % 60}min"
