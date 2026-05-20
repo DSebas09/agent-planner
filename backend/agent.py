@@ -55,8 +55,10 @@ class Agent:
     def on_delay_reported(self, task: Task, extra_minutes: int) -> list[DayPlanEntry]:
         now = datetime.now(timezone.utc)
         tasks = self._perceive()
-        now_shifted = now + timedelta(minutes=extra_minutes)
-        plan = build_plan(tasks, now_shifted)
+        # No state mutation here. We shift the temporal perception forward
+        # so the scheduler treats the delay as already consumed time.
+        shifted_now = now + timedelta(minutes=extra_minutes)
+        plan = build_plan(tasks, shifted_now)
         self._apply_plan(plan)
         self._log(
             trigger=AgentTrigger.DELAY_REPORTED,
