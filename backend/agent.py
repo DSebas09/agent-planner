@@ -149,4 +149,11 @@ class Agent:
         minutes = max(0, int((task.deadline - datetime.now(timezone.utc)).total_seconds() / 60))
         if minutes < 60:
             return f"{minutes} min"
-        return f"{minutes // 60}h {minutes % 60}min"
+        hours = minutes // 60
+        if hours < 24:
+            return f"{hours}h {minutes % 60}min"
+        days = hours // 24
+        remaining_hours = hours % 24
+        if remaining_hours > 0:
+            return f"{days}d {remaining_hours}h"
+        return f"{days}d"
