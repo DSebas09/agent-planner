@@ -36,6 +36,16 @@ class PlanEntryResponse(OrmBase):
     task: TaskResponse
 
 
+class TaskUpdate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    title: str | None = Field(default=None, min_length=1, max_length=200)
+    priority: Priority | None = None
+    energy_required: EnergyLevel | None = None
+    estimated_minutes: int | None = Field(default=None, gt=0)
+    deadline: AwareDatetime | None = None
+
+
 class CompleteTaskRequest(BaseModel):
     actual_minutes: int = Field(gt=0)
 

@@ -15,6 +15,7 @@ from schemas import (
     PlanEntryResponse,
     TaskCreate,
     TaskResponse,
+    TaskUpdate,
 )
 
 @asynccontextmanager
@@ -38,6 +39,23 @@ def create_task(payload: TaskCreate, session: DBSession) -> Task:
     session.commit()
     session.refresh(task)
     return task
+
+@tasks_router.get("/{task_id}", response_model=TaskResponse)
+def get_task(task_id: int, task: TaskDep) -> Task:
+    return task
+
+
+@tasks_router.patch("/{task_id}", response_model=list[PlanEntryResponse])
+def update_task(task_id: int, task: TaskDep, payload: TaskUpdate, session: DBSession) -> list[DayPlanEntry]:
+    Agent(session).on_task_updated(task, payload)
+    return _fetch_current_plan(session)
+
+
+@tasks_router.delete("/{task_id}", response_model=list[PlanEntryResponse])
+def delete_task(task_id: int, task: TaskDep, session: DBSession) -> list[DayPlanEntry]:
+    Agent(session).on_task_deleted(task)
+    return _fetch_current_plan(session)
+
 
 @tasks_router.get("", response_model=list[TaskResponse])
 def list_tasks(session: DBSession) -> list[Task]:

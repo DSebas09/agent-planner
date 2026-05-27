@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from models import AgentLog, AgentTrigger, DayPlanEntry, Task, TaskStatus
 from scheduler import build_plan
+from schemas import TaskUpdate
 
 
 class Agent:
@@ -52,6 +53,41 @@ class Agent:
         self._log(
             trigger=AgentTrigger.TASK_COMPLETED,
             message=self._message_task_completed(task, actual_minutes, self._resolve_next_task(plan)),
+        )
+        self._session.flush()
+        return plan
+
+    def on_task_updated(self, task: Task, payload: TaskUpdate) -> list[DayPlanEntry]:
+        for field, value in payload.model_dump(exclude_unset=True, exclude_none=True).items():
+            setattr(task, field, value)
+        if "deadline" in payload.model_fields_set and payload.deadline is None:
+            task.deadline = None
+        self._session.flush()
+
+        now = datetime.now(timezone.utc)
+        tasks = self._perceive()
+        plan = build_plan(tasks, now)
+        self._apply_plan(plan)
+        self._log(
+            trigger=AgentTrigger.TASK_UPDATED,
+            message=f"Actualizaste '{task.title}'. Reorganicé el plan.",
+        )
+        self._session.flush()
+        return plan
+
+    def on_task_deleted(self, task: Task) -> list[DayPlanEntry]:
+        title = task.title
+        self._session.execute(delete(DayPlanEntry).where(DayPlanEntry.task_id == task.id))
+        self._session.delete(task)
+        self._session.flush()
+
+        now = datetime.now(timezone.utc)
+        tasks = self._perceive()
+        plan = build_plan(tasks, now)
+        self._apply_plan(plan)
+        self._log(
+            trigger=AgentTrigger.TASK_DELETED,
+            message=f"Eliminaste '{title}'. Reorganicé el plan.",
         )
         self._session.flush()
         return plan

@@ -35,6 +35,8 @@ class AgentTrigger(str, Enum):
     TASK_ADDED = "task_added"
     TASK_STARTED = "task_started"
     TASK_COMPLETED = "task_completed"
+    TASK_UPDATED = "task_updated"
+    TASK_DELETED = "task_deleted"
     DELAY_REPORTED = "delay_reported"
 
 
