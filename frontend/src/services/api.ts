@@ -12,15 +12,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T
 }
 
+const post = <T>(path: string, body?: unknown) =>
+  request<T>(path, { method: 'POST', body: body ? JSON.stringify(body) : undefined })
+
+const patch = <T>(path: string, body: unknown) =>
+  request<T>(path, { method: 'PATCH', body: JSON.stringify(body) })
+
 export const api = {
   fetchTasks:   () => request<Task[]>('/tasks'),
   fetchTask:    (id: number) => request<Task>(`/tasks/${id}`),
-  createTask:   (payload: TaskCreate) => request<Task>('/tasks', { method: 'POST', body: JSON.stringify(payload) }),
-  updateTask:   (id: number, payload: TaskUpdate) => request<PlanEntry[]>(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }),
+  createTask:   (payload: TaskCreate) => post<Task>('/tasks', payload),
+  updateTask:   (id: number, payload: TaskUpdate) => patch<PlanEntry[]>(`/tasks/${id}`, payload),
   deleteTask:   (id: number) => request<PlanEntry[]>(`/tasks/${id}`, { method: 'DELETE' }),
-  startTask:    (id: number) => request<PlanEntry[]>(`/tasks/${id}/start`, { method: 'POST' }),
-  completeTask: (id: number, actualMinutes: number) => request<PlanEntry[]>(`/tasks/${id}/complete`, { method: 'POST', body: JSON.stringify({ actual_minutes: actualMinutes }) }),
-  reportDelay:  (id: number, extraMinutes: number) => request<PlanEntry[]>(`/tasks/${id}/delay`, { method: 'POST', body: JSON.stringify({ extra_minutes: extraMinutes }) }),
+  startTask:    (id: number) => post<PlanEntry[]>(`/tasks/${id}/start`),
+  completeTask: (id: number, actualMinutes: number) => post<PlanEntry[]>(`/tasks/${id}/complete`, { actual_minutes: actualMinutes }),
+  reportDelay:  (id: number, extraMinutes: number) => post<PlanEntry[]>(`/tasks/${id}/delay`, { extra_minutes: extraMinutes }),
   fetchPlan:    () => request<PlanEntry[]>('/plan'),
   fetchLogs:    () => request<AgentLog[]>('/logs'),
 }
