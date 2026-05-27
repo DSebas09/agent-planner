@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import delete, select
@@ -13,49 +14,30 @@ class Agent:
         self._session = session
 
     def on_task_added(self, new_task: Task) -> list[DayPlanEntry]:
-        now = datetime.now(timezone.utc)
-        tasks = self._perceive()
-        plan = build_plan(tasks, now, urgent_task=new_task)
-        self._apply_plan(plan)
-        self._log(
+        return self._replan(
             trigger=AgentTrigger.TASK_ADDED,
-            message=self._message_task_added(new_task, plan),
+            message_fn=lambda plan: self._message_task_added(new_task, plan),
+            urgent_task=new_task,
         )
-        self._session.flush()
-        return plan
 
     def on_task_started(self, task: Task) -> list[DayPlanEntry]:
         self._reset_current_in_progress(exclude_id=task.id)
         task.status = TaskStatus.IN_PROGRESS
-        # flush here stays. it's needed before _perceive() reads updated state
+        # flush before _replan so _perceive() reads the updated status
         self._session.flush()
-
-        now = datetime.now(timezone.utc)
-        tasks = self._perceive()
-        plan = build_plan(tasks, now)
-        self._apply_plan(plan)
-        self._log(
+        return self._replan(
             trigger=AgentTrigger.TASK_STARTED,
-            message=f"Iniciaste '{task.title}'. Ajusté el plan a partir de ahora.",
+            message_fn=lambda _: f"Iniciaste '{task.title}'. Ajusté el plan a partir de ahora.",
         )
-        self._session.flush()
-        return plan
 
     def on_task_completed(self, task: Task, actual_minutes: int) -> list[DayPlanEntry]:
         task.status = TaskStatus.COMPLETED
         task.actual_minutes = actual_minutes
         self._session.flush()
-
-        now = datetime.now(timezone.utc)
-        tasks = self._perceive()
-        plan = build_plan(tasks, now)
-        self._apply_plan(plan)
-        self._log(
+        return self._replan(
             trigger=AgentTrigger.TASK_COMPLETED,
-            message=self._message_task_completed(task, actual_minutes, self._resolve_next_task(plan)),
+            message_fn=lambda plan: self._message_task_completed(task, actual_minutes, self._resolve_next_task(plan)),
         )
-        self._session.flush()
-        return plan
 
     def on_task_updated(self, task: Task, payload: TaskUpdate) -> list[DayPlanEntry]:
         for field, value in payload.model_dump(exclude_unset=True, exclude_none=True).items():
@@ -63,49 +45,28 @@ class Agent:
         if "deadline" in payload.model_fields_set and payload.deadline is None:
             task.deadline = None
         self._session.flush()
-
-        now = datetime.now(timezone.utc)
-        tasks = self._perceive()
-        plan = build_plan(tasks, now)
-        self._apply_plan(plan)
-        self._log(
+        return self._replan(
             trigger=AgentTrigger.TASK_UPDATED,
-            message=f"Actualizaste '{task.title}'. Reorganicé el plan.",
+            message_fn=lambda _: f"Actualizaste '{task.title}'. Reorganicé el plan.",
         )
-        self._session.flush()
-        return plan
 
     def on_task_deleted(self, task: Task) -> list[DayPlanEntry]:
         title = task.title
         self._session.execute(delete(DayPlanEntry).where(DayPlanEntry.task_id == task.id))
         self._session.delete(task)
         self._session.flush()
-
-        now = datetime.now(timezone.utc)
-        tasks = self._perceive()
-        plan = build_plan(tasks, now)
-        self._apply_plan(plan)
-        self._log(
+        return self._replan(
             trigger=AgentTrigger.TASK_DELETED,
-            message=f"Eliminaste '{title}'. Reorganicé el plan.",
+            message_fn=lambda _: f"Eliminaste '{title}'. Reorganicé el plan.",
         )
-        self._session.flush()
-        return plan
 
     def on_delay_reported(self, task: Task, extra_minutes: int) -> list[DayPlanEntry]:
-        now = datetime.now(timezone.utc)
-        tasks = self._perceive()
-        # No state mutation here. We shift the temporal perception forward
-        # so the scheduler treats the delay as already consumed time.
-        shifted_now = now + timedelta(minutes=extra_minutes)
-        plan = build_plan(tasks, shifted_now)
-        self._apply_plan(plan)
-        self._log(
+        shifted_now = datetime.now(timezone.utc) + timedelta(minutes=extra_minutes)
+        return self._replan(
             trigger=AgentTrigger.DELAY_REPORTED,
-            message=self._message_delay_reported(task, extra_minutes, self._resolve_next_task(plan)),
+            message_fn=lambda plan: self._message_delay_reported(task, extra_minutes, self._resolve_next_task(plan)),
+            now=shifted_now,
         )
-        self._session.flush()
-        return plan
 
     # Cognition
 
@@ -119,6 +80,21 @@ class Agent:
         )
 
     # Execution
+
+    def _replan(
+        self,
+        trigger: AgentTrigger,
+        message_fn: Callable[[list[DayPlanEntry]], str],
+        now: datetime | None = None,
+        urgent_task: Task | None = None,
+    ) -> list[DayPlanEntry]:
+        effective_now = now or datetime.now(timezone.utc)
+        tasks = self._perceive()
+        plan = build_plan(tasks, effective_now, urgent_task=urgent_task)
+        self._apply_plan(plan)
+        self._log(trigger=trigger, message=message_fn(plan))
+        self._session.flush()
+        return plan
 
     def _apply_plan(self, plan: list[DayPlanEntry]) -> None:
         self._session.execute(delete(DayPlanEntry))
