@@ -12,3 +12,12 @@ wheels/
 
 #IDE
 .idea/
+.vscode/
+
+# SQLite
+*.db
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env*.local
