@@ -8,7 +8,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
   })
 
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`)
   return (await res.json()) as T
 }
 
