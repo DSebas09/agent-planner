@@ -8,12 +8,12 @@ interface Props {
 defineProps<Props>()
 
 const triggerColor: Record<string, string> = {
-  task_added:     'bg-blue-100 text-blue-700',
-  task_started:   'bg-green-100 text-green-700',
-  task_completed: 'bg-purple-100 text-purple-700',
-  task_updated:   'bg-yellow-100 text-yellow-700',
-  task_deleted:   'bg-red-100 text-red-700',
-  delay_reported: 'bg-orange-100 text-orange-700',
+  task_added:     'text-emerald-400',
+  task_started:   'text-blue-400',
+  task_completed: 'text-violet-400',
+  task_updated:   'text-amber-400',
+  task_deleted:   'text-red-400',
+  delay_reported: 'text-orange-400',
 }
 
 function formatTime(iso: string) {
@@ -22,23 +22,19 @@ function formatTime(iso: string) {
 </script>
 
 <template>
-  <div class="flex flex-col gap-2 overflow-y-auto">
-    <p v-if="logs.length === 0" class="text-sm text-gray-400 text-center py-4">
-      No agent activity yet.
-    </p>
+  <div class="bg-gray-950 rounded-xl px-4 py-3 font-mono text-xs overflow-y-auto h-44 flex flex-col-reverse">
+    <div v-if="logs.length === 0" class="text-gray-600">
+      $ waiting for agent activity...
+    </div>
 
     <div
-      v-for="log in [...logs].reverse()"
+      v-for="log in logs"
       :key="log.id"
-      class="flex flex-col gap-1 border-l-2 border-gray-200 pl-3 py-1"
+      class="flex gap-3 py-0.5 leading-relaxed"
     >
-      <div class="flex items-center gap-2">
-        <span class="text-xs text-gray-400">{{ formatTime(log.timestamp) }}</span>
-        <span :class="triggerColor[log.trigger]" class="text-xs font-medium px-2 py-0.5 rounded-full">
-          {{ log.trigger }}
-        </span>
-      </div>
-      <p class="text-sm text-gray-700">{{ log.message }}</p>
+      <span class="text-gray-600 shrink-0">{{ formatTime(log.timestamp) }}</span>
+      <span :class="triggerColor[log.trigger]" class="shrink-0 w-36">{{ log.trigger }}</span>
+      <span class="text-gray-300">{{ log.message }}</span>
     </div>
   </div>
 </template>
