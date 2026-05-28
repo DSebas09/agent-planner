@@ -2,13 +2,23 @@ import type { AgentLog, PlanEntry, Task, TaskCreate, TaskUpdate } from '../types
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
+function parseErrorMessage(body: string): string {
+  try {
+    const json = JSON.parse(body)
+    if (Array.isArray(json.detail))
+      return json.detail.map((e: { msg: string }) => e.msg).join(', ')
+    if (typeof json.detail === 'string') return json.detail
+  } catch {}
+  return body
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     headers: { 'Content-Type': 'application/json' },
     ...init,
   })
 
-  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`)
+  if (!res.ok) throw new Error(parseErrorMessage(await res.text()))
   return (await res.json()) as T
 }
 
