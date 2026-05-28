@@ -4,6 +4,7 @@ import type { PlanEntry } from '../types'
 
 interface Props {
   entry: PlanEntry
+  error?: string | null
 }
 
 const props = defineProps<Props>()
@@ -109,6 +110,8 @@ function handleDelay() {
         Confirm
       </button>
     </div>
+
+    <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
 
     <div v-if="showDelayForm" class="flex gap-2 items-center mt-1">
       <input v-model.number="extraMinutes" type="number" min="1" class="border rounded px-2 py-1 w-24 text-sm" />

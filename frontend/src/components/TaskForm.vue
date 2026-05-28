@@ -2,6 +2,12 @@
 import { reactive } from 'vue'
 import type { TaskCreate, Priority, EnergyLevel } from '../types'
 
+interface Props {
+  error?: string | null
+}
+
+defineProps<Props>()
+
 const emit = defineEmits<{
   submit: [payload: TaskCreate]
 }>()
@@ -78,6 +84,8 @@ function handleSubmit() {
     <button type="submit" class="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700">
       Add task
     </button>
+
+    <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
   </form>
 </template>
 
