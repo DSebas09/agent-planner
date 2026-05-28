@@ -1,10 +1,12 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, APIRouter
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
 from agent import Agent
+from config import CORS_ORIGINS
 from dependencies import DBSession, TaskDep
 from database import init_db
 from models import AgentLog, DayPlanEntry, Task, TaskStatus
@@ -24,6 +26,12 @@ async def lifespan(_app: FastAPI):
     yield
 
 app = FastAPI(title="Agent Planner", lifespan=lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 tasks_router = APIRouter(prefix="/tasks", tags=["tasks"])
 plan_router  = APIRouter(prefix="/plan",  tags=["plan"])

@@ -23,3 +23,6 @@ INTERRUPTION_THRESHOLD: float = 20.0
 
 # database.py
 DATABASE_URL: str = os.getenv("DATABASE_URL", f"sqlite:///{_BASE_DIR}/agent_planner.db")
+
+# main.py
+CORS_ORIGINS: list[str] = os.getenv("CORS_ORIGINS", "http://localhost:5174").split(",")
