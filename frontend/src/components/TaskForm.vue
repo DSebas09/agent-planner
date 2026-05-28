@@ -20,6 +20,21 @@ const form = reactive({
   deadline: '',
 })
 
+const priorities: Priority[] = ['high', 'medium', 'low']
+const energyLevels: EnergyLevel[] = ['high', 'medium', 'low']
+
+const priorityActive: Record<Priority, string> = {
+  high:   'bg-red-500 border-red-500 text-white',
+  medium: 'bg-amber-400 border-amber-400 text-white',
+  low:    'bg-emerald-500 border-emerald-500 text-white',
+}
+
+const energyActive: Record<EnergyLevel, string> = {
+  high:   'bg-violet-500 border-violet-500 text-white',
+  medium: 'bg-blue-500 border-blue-500 text-white',
+  low:    'bg-teal-500 border-teal-500 text-white',
+}
+
 function resetForm() {
   form.title = ''
   form.priority = 'medium'
@@ -41,51 +56,84 @@ function handleSubmit() {
 </script>
 
 <template>
-  <form @submit.prevent="handleSubmit" class="flex flex-col gap-3">
+  <form @submit.prevent="handleSubmit" class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col gap-4">
+    <h2 class="font-bold text-gray-800 text-base">New task</h2>
+
     <input
       v-model="form.title"
       type="text"
-      placeholder="Task title"
+      placeholder="What needs to get done?"
       required
-      class="border rounded px-3 py-2"
+      class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
     />
 
-    <div class="flex gap-2">
-      <select v-model="form.priority" class="border rounded px-3 py-2 flex-1">
-        <option value="high">High priority</option>
-        <option value="medium">Medium priority</option>
-        <option value="low">Low priority</option>
-      </select>
+    <div class="grid grid-cols-2 gap-4">
+      <div class="flex flex-col gap-1.5">
+        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Priority</span>
+        <div class="flex gap-1.5">
+          <button
+            v-for="p in priorities"
+            :key="p"
+            type="button"
+            @click="form.priority = p"
+            :class="form.priority === p ? priorityActive[p] : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300'"
+            class="flex-1 py-1.5 text-xs font-bold rounded-full border-2 capitalize transition-colors"
+          >
+            {{ p }}
+          </button>
+        </div>
+      </div>
 
-      <select v-model="form.energy_required" class="border rounded px-3 py-2 flex-1">
-        <option value="high">High energy</option>
-        <option value="medium">Medium energy</option>
-        <option value="low">Low energy</option>
-      </select>
+      <div class="flex flex-col gap-1.5">
+        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Energy</span>
+        <div class="flex gap-1.5">
+          <button
+            v-for="e in energyLevels"
+            :key="e"
+            type="button"
+            @click="form.energy_required = e"
+            :class="form.energy_required === e ? energyActive[e] : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300'"
+            class="flex-1 py-1.5 text-xs font-bold rounded-full border-2 capitalize transition-colors"
+          >
+            {{ e }}
+          </button>
+        </div>
+      </div>
     </div>
 
-    <div class="flex gap-2">
-      <input
-        v-model.number="form.estimated_minutes"
-        type="number"
-        min="1"
-        placeholder="Minutes"
-        required
-        class="border rounded px-3 py-2 w-32"
-      />
+    <div class="flex gap-3">
+      <div class="flex flex-col gap-1.5">
+        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Duration</span>
+        <div class="flex items-center gap-1.5">
+          <input
+            v-model.number="form.estimated_minutes"
+            type="number"
+            min="1"
+            required
+            class="border border-gray-200 rounded-lg px-3 py-2 text-sm w-24 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <span class="text-xs text-gray-400">min</span>
+        </div>
+      </div>
 
-      <input
-        v-model="form.deadline"
-        type="datetime-local"
-        class="border rounded px-3 py-2 flex-1"
-      />
+      <div class="flex flex-col gap-1.5 flex-1">
+        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Deadline</span>
+        <input
+          v-model="form.deadline"
+          type="datetime-local"
+          class="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+      </div>
     </div>
 
-    <button type="submit" class="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700">
-      Add task
+    <button
+      type="submit"
+      class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2.5 rounded-lg transition-colors text-sm"
+    >
+      + Add task
     </button>
 
-    <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
+    <p v-if="error" class="text-xs text-red-600 font-medium">{{ error }}</p>
   </form>
 </template>
 
