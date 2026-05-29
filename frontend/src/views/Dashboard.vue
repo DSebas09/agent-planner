@@ -12,6 +12,7 @@ const { createTask, startTask, completeTask, reportDelay, deleteTask, error: act
 const { plan, startPolling } = usePlan()
 const { logs } = useLogs()
 
+const showForm = ref(false)
 const formError = ref<string | null>(null)
 const errorTaskId = ref<number | null>(null)
 
@@ -21,6 +22,7 @@ async function handleCreate(payload: TaskCreate) {
   formError.value = null
   await createTask(payload)
   formError.value = actionError.value
+  if (!formError.value) showForm.value = false
 }
 
 async function handleTaskAction(id: number, fn: () => Promise<unknown>) {
@@ -31,36 +33,50 @@ async function handleTaskAction(id: number, fn: () => Promise<unknown>) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 p-6">
-    <h1 class="text-2xl font-bold text-gray-800 mb-6">Day Planner</h1>
+  <div class="h-screen bg-gray-50 flex flex-col overflow-hidden">
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+      <div>
+        <h1 class="text-lg font-bold text-gray-900">Agent Planner</h1>
+        <p class="text-xs text-gray-400">{{ new Date().toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' }) }}</p>
+      </div>
+      <button
+        @click="showForm = !showForm"
+        :class="showForm ? 'bg-gray-100 text-gray-600' : 'bg-blue-500 text-white hover:bg-blue-600'"
+        class="text-sm font-semibold px-4 py-2 rounded-full transition-colors"
+      >
+        {{ showForm ? '✕ Cancel' : '+ New Task' }}
+      </button>
+    </header>
 
-      <div class="lg:col-span-2 flex flex-col gap-4">
+    <div v-if="showForm" class="bg-white border-b border-gray-200 px-6 py-5">
+      <div class="max-w-2xl mx-auto">
         <TaskForm :error="formError" @submit="handleCreate" />
-
-        <p v-if="plan.length === 0" class="text-gray-400 text-sm text-center py-8">
-          No tasks planned for today.
-        </p>
-
-        <template v-for="entry in plan" :key="entry.task.id">
-          <TaskCard
-            :entry="entry"
-            :error="errorTaskId === entry.task.id ? actionError : null"
-            @start="(id) => handleTaskAction(id, () => startTask(id))"
-            @complete="(id, mins) => handleTaskAction(id, () => completeTask(id, mins))"
-            @delay="(id, mins) => handleTaskAction(id, () => reportDelay(id, mins))"
-            @delete="(id) => handleTaskAction(id, () => deleteTask(id))"
-          />
-        </template>
       </div>
-
-      <div class="bg-white border rounded-lg p-4 h-fit sticky top-6">
-        <h2 class="font-semibold text-gray-700 mb-3">Agent Log</h2>
-        <AgentLog :logs="logs" />
-      </div>
-
     </div>
+
+    <main class="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-3 w-full">
+      <p v-if="plan.length === 0" class="text-gray-400 text-sm text-center py-12">
+        No tasks planned for today. Add one to get started.
+      </p>
+
+      <template v-for="entry in plan" :key="entry.task.id">
+        <TaskCard
+          :entry="entry"
+          :error="errorTaskId === entry.task.id ? actionError : null"
+          @start="(id) => handleTaskAction(id, () => startTask(id))"
+          @complete="(id, mins) => handleTaskAction(id, () => completeTask(id, mins))"
+          @delay="(id, mins) => handleTaskAction(id, () => reportDelay(id, mins))"
+          @delete="(id) => handleTaskAction(id, () => deleteTask(id))"
+        />
+      </template>
+    </main>
+
+    <footer class="px-6 pb-6 w-full">
+      <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Agent Log</p>
+      <AgentLog :logs="logs" />
+    </footer>
+
   </div>
 </template>
 
