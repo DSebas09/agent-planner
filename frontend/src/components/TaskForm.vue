@@ -67,7 +67,7 @@ function handleSubmit() {
       class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
     />
 
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div class="flex flex-col gap-1.5">
         <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Priority</span>
         <div class="flex gap-1.5">
@@ -101,7 +101,7 @@ function handleSubmit() {
       </div>
     </div>
 
-    <div class="flex gap-3">
+    <div class="flex flex-col sm:flex-row gap-3">
       <div class="flex flex-col gap-1.5">
         <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Duration</span>
         <div class="flex items-center gap-1.5">

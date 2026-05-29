@@ -30,10 +30,12 @@ function formatTime(iso: string) {
     <div
       v-for="log in logs"
       :key="log.id"
-      class="flex gap-3 py-0.5 leading-relaxed"
+      class="flex flex-col sm:flex-row sm:gap-3 py-0.5 leading-relaxed"
     >
-      <span class="text-gray-600 shrink-0">{{ formatTime(log.timestamp) }}</span>
-      <span :class="triggerColor[log.trigger]" class="shrink-0 w-36">{{ log.trigger }}</span>
+      <div class="flex gap-2 shrink-0">
+        <span class="text-gray-600">{{ formatTime(log.timestamp) }}</span>
+        <span :class="triggerColor[log.trigger]" class="sm:w-36">{{ log.trigger }}</span>
+      </div>
       <span class="text-gray-300">{{ log.message }}</span>
     </div>
   </div>

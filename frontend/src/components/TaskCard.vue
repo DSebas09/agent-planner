@@ -82,8 +82,8 @@ function handleDelay() {
     :class="[statusBg[entry.task.status], priorityBorder[entry.task.priority]]"
     class="border-l-4 rounded-lg border border-gray-100 shadow-sm"
   >
-    <div class="flex items-center gap-4 px-4 py-3">
-      <span class="shrink-0 font-mono text-xs text-gray-400">
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3">
+      <span class="w-full md:w-auto shrink-0 font-mono text-xs text-gray-400">
         <span class="font-bold text-gray-500">#{{ entry.position }}</span>
         · {{ formatTime(entry.scheduled_start) }}–{{ formatTime(entry.scheduled_end) }}
       </span>
@@ -93,7 +93,7 @@ function handleDelay() {
       </span>
     </div>
 
-    <div class="flex items-center gap-2 px-4 pb-3">
+    <div class="flex flex-wrap items-center gap-2 px-4 pb-3">
       <div class="flex gap-1.5 flex-1 flex-wrap">
         <span :class="priorityBadge[entry.task.priority]" class="text-xs font-semibold px-2.5 py-0.5 rounded-full">
           {{ entry.task.priority }}
@@ -109,20 +109,22 @@ function handleDelay() {
         </span>
       </div>
 
-      <div class="flex items-center gap-2 shrink-0">
-        <template v-if="entry.task.status === 'pending'">
-          <button @click="emit('start', entry.task.id)" class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-colors">
-            Start
-          </button>
-        </template>
-        <template v-if="entry.task.status === 'in_progress'">
-          <button @click="showCompleteForm = !showCompleteForm" class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-colors">
-            Complete
-          </button>
-          <button @click="showDelayForm = !showDelayForm" class="bg-amber-400 hover:bg-amber-500 text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-colors">
-            Delay
-          </button>
-        </template>
+      <div class="flex items-center gap-2 w-full md:w-auto justify-between md:justify-start">
+        <div class="flex gap-2">
+          <template v-if="entry.task.status === 'pending'">
+            <button @click="emit('start', entry.task.id)" class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-colors">
+              Start
+            </button>
+          </template>
+          <template v-if="entry.task.status === 'in_progress'">
+            <button @click="showCompleteForm = !showCompleteForm" class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-colors">
+              Complete
+            </button>
+            <button @click="showDelayForm = !showDelayForm" class="bg-amber-400 hover:bg-amber-500 text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-colors">
+              Delay
+            </button>
+          </template>
+        </div>
         <button @click="emit('delete', entry.task.id)" class="text-gray-300 hover:text-red-500 transition-colors text-lg font-bold leading-none px-1">
           ×
         </button>
